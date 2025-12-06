@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+**/*-keypair.json
+onchain/test-ledger/
+logs
+.DS_Store
+.vscode/
