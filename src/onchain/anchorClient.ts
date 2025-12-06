@@ -42,7 +42,7 @@ export class SolanaClient {
     // Try to load from base64 env var first (for Railway)
     if (process.env.SERVER_KEYPAIR_BASE64) {
       try {
-        const keypairData = JSON.parse(Buffer.from(process.env.SERVER_KEYPAIR_BASE64, 'base64').toString('utf-8'));
+        const keypairData = JSON.parse(Buffer.from(process.env.SERVER_KEYPAIR_BASE64, 'base64').toString('utf-8').trim());
         console.log('🔑 Loaded keypair from base64 environment variable');
         return Keypair.fromSecretKey(new Uint8Array(keypairData));
       } catch (error) {
