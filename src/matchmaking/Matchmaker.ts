@@ -1,4 +1,4 @@
-import { GameServer } from '../game/GameServer';
+import { GameServer } from '../game/GameServer.js';
 
 interface Room {
   id: string;

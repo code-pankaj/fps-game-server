@@ -1,12 +1,12 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { GameServer } from '../game/GameServer';
-import { Matchmaker } from '../matchmaking/Matchmaker';
+import { GameServer } from '../game/GameServer.js';
+import { Matchmaker } from '../matchmaking/Matchmaker.js';
 import {
   NetworkMessage,
   MessageType,
   JoinMessage,
-} from '../types/game.types';
-import { GAME_CONSTANTS, MAP_CONSTANTS } from '../constants/game.constants';
+} from '../types/game.types.js';
+import { GAME_CONSTANTS, MAP_CONSTANTS } from '../constants/game.constants.js';
 
 interface Client {
   ws: WebSocket;

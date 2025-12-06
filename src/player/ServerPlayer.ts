@@ -1,6 +1,6 @@
 import type RAPIER from '@dimforge/rapier3d-compat';
-import type { PlayerState, PlayerInput, Vector3, Rotation } from '../types/game.types';
-import { GAME_CONSTANTS } from '../constants/game.constants';
+import type { PlayerState, PlayerInput, Vector3, Rotation } from '../types/game.types.js';
+import { GAME_CONSTANTS } from '../constants/game.constants.js';
 
 /**
  * Server-side player with physics and state management
