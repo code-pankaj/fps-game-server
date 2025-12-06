@@ -1,7 +1,7 @@
 import { GameServer } from '../game/GameServer.js';
 
 interface Room {
-  id: string;
+  id: number;
   server: GameServer;
   capacity: number;
 }
@@ -9,14 +9,15 @@ interface Room {
 export class Matchmaker {
   private rooms: Room[] = [];
   private readonly CAPACITY = 2;
+  private nextRoomId = 1;
 
   async allocateRoom(): Promise<Room> {
     // Find a room with available slot
     let room = this.rooms.find(r => r.capacity > this.getPlayerCount(r));
     if (!room) {
-      // Create new room
-      const id = `room_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-      const server = new GameServer();
+      // Create new room with numeric ID
+      const id = this.nextRoomId++;
+      const server = new GameServer(id);
       await server.initialize();
       room = { id, server, capacity: this.CAPACITY };
       this.rooms.push(room);
@@ -29,7 +30,7 @@ export class Matchmaker {
     return room.server.getPlayers().size;
   }
 
-  removePlayerFromRoom(roomId: string, playerId: string): void {
+  removePlayerFromRoom(roomId: number, playerId: string): void {
     const room = this.rooms.find(r => r.id === roomId);
     if (!room) return;
     room.server.removePlayer(playerId);
@@ -39,7 +40,7 @@ export class Matchmaker {
     }
   }
 
-  destroyRoom(roomId: string): void {
+  destroyRoom(roomId: number): void {
     const idx = this.rooms.findIndex(r => r.id === roomId);
     if (idx >= 0) {
       console.log(`🧹 Destroying empty room ${roomId}`);
@@ -49,7 +50,7 @@ export class Matchmaker {
     }
   }
 
-  getRoomById(roomId: string): Room | undefined {
+  getRoomById(roomId: number): Room | undefined {
     return this.rooms.find(r => r.id === roomId);
   }
 }

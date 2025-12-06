@@ -13,7 +13,7 @@ interface Client {
   playerId: string;
   username: string;
   lastUpdate: number;
-  roomId?: string;
+  roomId?: number;
 }
 
 /**

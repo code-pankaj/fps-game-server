@@ -44,6 +44,7 @@ export interface GameState {
   timestamp: number;
   players: { [id: string]: PlayerState };
   scores?: { [username: string]: number };
+  roomId?: number;
 }
 
 export interface ShootEvent {

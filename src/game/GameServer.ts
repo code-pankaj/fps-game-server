@@ -17,6 +17,11 @@ export class GameServer {
   private scores: Map<string, number> = new Map();
   private winPoints = 3;
   private usedSpawnIndices: Set<number> = new Set();
+  private roomId: number;
+
+  constructor(roomId: number = 0) {
+    this.roomId = roomId;
+  }
 
   async initialize(): Promise<void> {
     // Initialize RAPIER physics
@@ -161,6 +166,7 @@ export class GameServer {
       timestamp: Date.now(),
       players: playersState,
       scores: Object.fromEntries(this.scores.entries()),
+      roomId: this.roomId,
     };
   }
 
