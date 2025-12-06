@@ -11,7 +11,13 @@ interface Room {
 export class Matchmaker {
   private rooms: Room[] = [];
   private readonly CAPACITY = 2;
-  private nextRoomId = 1;
+  private nextRoomId: number;
+
+  constructor() {
+    // Start with timestamp-based ID to avoid conflicts with existing matches
+    // Use last 6 digits of timestamp for reasonable uniqueness
+    this.nextRoomId = Math.floor(Date.now() / 1000) % 1000000;
+  }
 
   async allocateRoom(): Promise<Room> {
     // Find a room with available slot
