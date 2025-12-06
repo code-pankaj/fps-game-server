@@ -1,5 +1,6 @@
-import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
+import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 

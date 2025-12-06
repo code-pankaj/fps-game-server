@@ -15,9 +15,11 @@
     "@coral-xyz/anchor": "^0.32.1",
     "@dimforge/rapier3d-compat": "^0.19.3",
     "@solana/web3.js": "^1.98.4",
+    "bn.js": "^5.2.2",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
     "@types/node": "^22.10.2",
     "@types/ws": "^8.5.13",
     "tsx": "^4.19.2",

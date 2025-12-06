@@ -8,7 +8,7 @@ import {
 } from '../types/game.types.js';
 import { GAME_CONSTANTS, MAP_CONSTANTS } from '../constants/game.constants.js';
 import { PublicKey } from '@solana/web3.js';
-import { BN } from '@coral-xyz/anchor';
+import BN from 'bn.js';
 import { getSolanaClient } from '../onchain/anchorClient.js';
 
 interface Client {
