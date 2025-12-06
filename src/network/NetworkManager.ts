@@ -105,13 +105,31 @@ export class NetworkManager {
         walletAddress,
       });
       
-      // Send join confirmation with room info (clients will create match themselves)
+      // Calculate match PDA for client
+      let matchPda: string | undefined;
+      try {
+        const solanaClient = getSolanaClient();
+        const [pda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from('match'),
+            solanaClient.getServerPublicKey().toBuffer(),
+            Buffer.from(room.id.toString().padStart(8, '0')),
+          ],
+          solanaClient.getProgram().programId
+        );
+        matchPda = pda.toString();
+      } catch (error) {
+        console.error('Failed to calculate match PDA:', error);
+      }
+      
+      // Send join confirmation scoped to room
       this.sendMessage(ws, {
         type: MessageType.PLAYER_JOINED,
         data: {
           playerId,
           gameState: room.server.getGameState(),
           roomId: room.id,
+          matchPda,
         },
         timestamp: Date.now(),
       });
@@ -155,9 +173,16 @@ export class NetworkManager {
       
       // Send the signed transaction to Solana
       const solanaClient = getSolanaClient();
-      const signature = await solanaClient.sendSignedTransaction(serializedTransaction);
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      const signature = await solanaClient.getProgram().provider.connection.sendRawTransaction(txBuffer, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
 
       console.log(`✅ Kill recorded on-chain. Signature: ${signature}`);
+
+      // Confirm the transaction
+      await solanaClient.getProgram().provider.connection.confirmTransaction(signature, 'confirmed');
       
       // Notify all clients that kill was recorded on-chain
       this.broadcast({
