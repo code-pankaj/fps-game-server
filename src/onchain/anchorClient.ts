@@ -176,6 +176,41 @@ export class SolanaClient {
   }
 
   /**
+   * Finish a match (called when match ends or player leaves)
+   */
+  async finishMatch(matchId: number, reason: 'winner' | 'disconnect' | 'timeout' = 'winner'): Promise<void> {
+    try {
+      console.log(`🏁 Finishing match ${matchId} (reason: ${reason})...`);
+
+      const matchIdBN = new BN(matchId);
+      const matchIdBuffer = matchIdBN.toArrayLike(Buffer, 'le', 8);
+
+      const [matchPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('match'),
+          this.serverKeypair.publicKey.toBuffer(),
+          matchIdBuffer,
+        ],
+        this.program.programId
+      );
+
+      const tx = await this.program.methods
+        .finishMatch()
+        .accounts({
+          owner: this.serverKeypair.publicKey,
+          matchAccount: matchPda,
+        })
+        .rpc();
+
+      console.log(`✅ Match ${matchId} finished on-chain`);
+      console.log(`📝 Reason: ${reason}`);
+      console.log(`🔗 Transaction: ${tx}`);
+    } catch (error) {
+      console.error(`❌ Failed to finish match ${matchId}:`, error);
+    }
+  }
+
+  /**
    * Get match state from blockchain (commented out for now)
    */
   async getMatchState(matchId: number): Promise<any> {

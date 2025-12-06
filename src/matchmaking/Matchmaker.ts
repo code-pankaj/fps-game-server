@@ -5,6 +5,7 @@ interface Room {
   id: number;
   server: GameServer;
   capacity: number;
+  matchPda?: string; // On-chain match PDA address
 }
 
 export class Matchmaker {
@@ -27,7 +28,9 @@ export class Matchmaker {
       // Create match on-chain
       try {
         const solanaClient = getSolanaClient();
-        await solanaClient.createMatch(id, 3); // 3 kills to win
+        const matchPda = await solanaClient.createMatch(id, 3); // 3 kills to win
+        room.matchPda = matchPda.toString();
+        room.server.setMatchPda(matchPda.toString());
         console.log(`⛓️  Match ${id} created on blockchain`);
       } catch (error) {
         console.error(`❌ Failed to create on-chain match ${id}:`, error);

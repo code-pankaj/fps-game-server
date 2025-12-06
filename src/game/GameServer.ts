@@ -18,9 +18,23 @@ export class GameServer {
   private winPoints = 3;
   private usedSpawnIndices: Set<number> = new Set();
   private roomId: number;
+  private matchPda: string | null = null;
+  private matchFinished: boolean = false;
 
   constructor(roomId: number = 0) {
     this.roomId = roomId;
+  }
+
+  setMatchPda(pda: string): void {
+    this.matchPda = pda;
+  }
+
+  getMatchPda(): string | null {
+    return this.matchPda;
+  }
+
+  isMatchFinished(): boolean {
+    return this.matchFinished;
   }
 
   async initialize(): Promise<void> {
@@ -170,15 +184,17 @@ export class GameServer {
     };
   }
 
-  addKill(shooterName: string): { winner?: string; scores: { [name: string]: number } } {
+  addKill(shooterName: string): { winner?: string; scores: { [name: string]: number }; matchFinished: boolean } {
     const current = this.scores.get(shooterName) ?? 0;
     const next = current + 1;
     this.scores.set(shooterName, next);
     const scoresObj = Object.fromEntries(this.scores.entries());
     if (next >= this.winPoints) {
-      return { winner: shooterName, scores: scoresObj };
+      this.matchFinished = true;
+      console.log(`🏆 Match ${this.roomId} finished! Winner: ${shooterName}`);
+      return { winner: shooterName, scores: scoresObj, matchFinished: true };
     }
-    return { scores: scoresObj };
+    return { scores: scoresObj, matchFinished: false };
   }
 
   getPlayers(): Map<string, ServerPlayer> {

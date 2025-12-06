@@ -314,13 +314,25 @@ export class NetworkManager {
           const result = room.server.addKill(client.username);
           this.broadcast({
             type: MessageType.SCORE_UPDATE,
-            data: { scores: result.scores },
+            data: { scores: result.scores, roomId: client.roomId },
             timestamp: Date.now(),
           });
-          if (result.winner) {
+          
+          if (result.matchFinished && result.winner && client.roomId !== undefined) {
+            console.log(`🏆 ${result.winner} wins match ${client.roomId}!`);
+            
+            // Finish match on-chain
+            this.finishMatchOnChain(client.roomId, 'winner', result.winner).catch(err => {
+              console.error('Failed to finish match on-chain:', err);
+            });
+
             this.broadcast({
               type: MessageType.MATCH_WON,
-              data: { winner: result.winner, scores: result.scores },
+              data: { 
+                winner: result.winner, 
+                scores: result.scores,
+                roomId: client.roomId,
+              },
               timestamp: Date.now(),
             });
           }
@@ -337,14 +349,28 @@ export class NetworkManager {
     }
   }
 
-  private handleDisconnect(ws: WebSocket): void {
+  private async handleDisconnect(ws: WebSocket): Promise<void> {
     const client = this.clients.get(ws);
     if (client) {
+      console.log(`🔌 Client disconnected: ${client.username}`);
+      
       // Free up the username number
       this.freeUsername(client.username);
       
       if (client.roomId) {
+        const room = this.matchmaker.getRoomById(client.roomId);
         this.matchmaker.removePlayerFromRoom(client.roomId, client.playerId);
+        
+        // Check if match should be ended due to disconnect
+        if (room) {
+          const remainingPlayers = room.server.getPlayers().size;
+          console.log(`👥 Remaining players in room ${room.id}: ${remainingPlayers}`);
+          
+          if (remainingPlayers < 2 && !room.server.isMatchFinished()) {
+            console.log(`⚠️  Not enough players in room ${room.id}, finishing match...`);
+            await this.finishMatchOnChain(room.id, 'disconnect', client.username);
+          }
+        }
       } else {
         this.gameServer.removePlayer(client.playerId);
       }
@@ -360,8 +386,30 @@ export class NetworkManager {
         },
         timestamp: Date.now(),
       });
+    }
+  }
+
+  private async finishMatchOnChain(
+    roomId: number,
+    reason: 'winner' | 'disconnect' | 'timeout',
+    player?: string
+  ): Promise<void> {
+    try {
+      const solanaClient = getSolanaClient();
+      await solanaClient.finishMatch(roomId, reason);
       
-      console.log('🔌 Client disconnected');
+      const room = this.matchmaker.getRoomById(roomId);
+      if (room) {
+        const state = room.server.getGameState();
+        console.log(`📊 Final scores for match ${roomId}:`, state.scores);
+        if (reason === 'winner' && player) {
+          console.log(`🎉 Winner: ${player}`);
+        } else if (reason === 'disconnect' && player) {
+          console.log(`🚪 Match ended: ${player} disconnected`);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error finishing match ${roomId}:`, error);
     }
   }
 
