@@ -68,6 +68,7 @@ export enum MessageType {
   PLAYER_INPUT = 'player_input',
   PLAYER_SHOOT = 'player_shoot',
   PLAYER_DISCONNECT = 'player_disconnect',
+  RECORD_KILL_TX = 'record_kill_tx', // Client sends signed transaction
   
   // Server -> Client
   GAME_STATE = 'game_state',
@@ -78,6 +79,7 @@ export enum MessageType {
   PLAYER_DIED = 'player_died',
   SCORE_UPDATE = 'score_update',
   MATCH_WON = 'match_won',
+  KILL_RECORDED_ONCHAIN = 'kill_recorded_onchain', // Confirmation of on-chain kill
 }
 
 export interface NetworkMessage {
@@ -88,9 +90,12 @@ export interface NetworkMessage {
 
 export interface JoinMessage {
   username: string;
+  walletAddress?: string; // Optional Solana wallet address
 }
 
 export interface JoinedMessage {
   playerId: string;
   gameState: GameState;
+  roomId?: number;
+  matchPda?: string; // On-chain match account address
 }

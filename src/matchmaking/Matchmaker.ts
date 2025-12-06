@@ -1,4 +1,5 @@
 import { GameServer } from '../game/GameServer.js';
+import { getSolanaClient } from '../onchain/anchorClient.js';
 
 interface Room {
   id: number;
@@ -21,7 +22,17 @@ export class Matchmaker {
       await server.initialize();
       room = { id, server, capacity: this.CAPACITY };
       this.rooms.push(room);
-      console.log(`🏟️ Created room ${id}`);
+      console.log(`🏛️ Created room ${id}`);
+      
+      // Create match on-chain
+      try {
+        const solanaClient = getSolanaClient();
+        await solanaClient.createMatch(id, 3); // 3 kills to win
+        console.log(`⛓️  Match ${id} created on blockchain`);
+      } catch (error) {
+        console.error(`❌ Failed to create on-chain match ${id}:`, error);
+        // Continue anyway - game can still work without on-chain
+      }
     }
     return room;
   }

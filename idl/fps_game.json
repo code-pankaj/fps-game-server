@@ -1,0 +1,270 @@
+{
+  "address": "HTewvNaFXBYjBnEixXXGUAHwjU2yAJbAAdDfouzm3a51",
+  "metadata": {
+    "name": "fps_game",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "create_match",
+      "discriminator": [
+        107,
+        2,
+        184,
+        145,
+        70,
+        142,
+        17,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "match_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  116,
+                  99,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "match_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "match_id",
+          "type": "u64"
+        },
+        {
+          "name": "win_points",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "finish_match",
+      "discriminator": [
+        65,
+        193,
+        5,
+        71,
+        16,
+        64,
+        11,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "match_account",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "join_match",
+      "discriminator": [
+        244,
+        8,
+        47,
+        130,
+        192,
+        59,
+        179,
+        44
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "name": "match_account",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_kill",
+      "discriminator": [
+        199,
+        67,
+        232,
+        200,
+        144,
+        122,
+        230,
+        56
+      ],
+      "accounts": [
+        {
+          "name": "shooter",
+          "signer": true
+        },
+        {
+          "name": "match_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "victim",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "MatchAccount",
+      "discriminator": [
+        235,
+        36,
+        243,
+        39,
+        81,
+        16,
+        144,
+        87
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MatchFull",
+      "msg": "Match is already full"
+    },
+    {
+      "code": 6001,
+      "name": "MatchFinished",
+      "msg": "Match already finished"
+    },
+    {
+      "code": 6002,
+      "name": "NotEnoughPlayers",
+      "msg": "Not enough players in match"
+    },
+    {
+      "code": 6003,
+      "name": "NotAPlayer",
+      "msg": "Caller is not one of the players"
+    },
+    {
+      "code": 6004,
+      "name": "AlreadyJoined",
+      "msg": "Already joined as player1"
+    },
+    {
+      "code": 6005,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    }
+  ],
+  "types": [
+    {
+      "name": "MatchAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "match_id",
+            "type": "u64"
+          },
+          {
+            "name": "player1",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "player2",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "score1",
+            "type": "u8"
+          },
+          {
+            "name": "score2",
+            "type": "u8"
+          },
+          {
+            "name": "win_points",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "MatchStatus"
+              }
+            }
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MatchStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Finished"
+          }
+        ]
+      }
+    }
+  ]
+}

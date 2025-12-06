@@ -1,11 +1,21 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { GameServer } from './game/GameServer.js';
 import { NetworkManager } from './network/NetworkManager.js';
+import { getSolanaClient } from './onchain/anchorClient.js';
 
 const PORT = process.env.PORT || 3001;
 
 async function startServer() {
   console.log('🚀 Starting FPS Game Server...');
+  
+  // Initialize Solana client
+  try {
+    getSolanaClient();
+    console.log('⛓️  Solana client initialized');
+  } catch (error) {
+    console.error('⚠️  Failed to initialize Solana client:', error);
+    console.log('⚠️  Server will run without blockchain integration');
+  }
   
   // Create WebSocket server
   const wss = new WebSocketServer({ port: Number(PORT) });

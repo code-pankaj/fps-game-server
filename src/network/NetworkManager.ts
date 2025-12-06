@@ -7,6 +7,8 @@ import {
   JoinMessage,
 } from '../types/game.types.js';
 import { GAME_CONSTANTS, MAP_CONSTANTS } from '../constants/game.constants.js';
+import { PublicKey } from '@solana/web3.js';
+import { getSolanaClient } from '../onchain/anchorClient.js';
 
 interface Client {
   ws: WebSocket;
@@ -14,6 +16,7 @@ interface Client {
   username: string;
   lastUpdate: number;
   roomId?: number;
+  walletAddress?: string; // Player's Solana wallet address
 }
 
 /**
@@ -75,6 +78,10 @@ export class NetworkManager {
         this.handlePlayerShoot(ws, data);
         break;
         
+      case 'record_kill_tx':
+        this.handleRecordKillTransaction(ws, data);
+        break;
+        
       default:
         console.warn('⚠️  Unknown message type:', type);
     }
@@ -83,17 +90,38 @@ export class NetworkManager {
   private handlePlayerJoin(ws: WebSocket, data: JoinMessage): void {
     const playerId = this.generatePlayerId();
     const username = this.generateUsername();
+    const walletAddress = data.walletAddress;
     
     this.matchmaker.allocateRoom().then(room => {
       const player = room.server.addPlayer(playerId, username);
-      // Register client with roomId
+      
+      // Register client with roomId and wallet
       this.clients.set(ws, {
         ws,
         playerId,
         username,
         lastUpdate: Date.now(),
         roomId: room.id,
+        walletAddress,
       });
+      
+      // Calculate match PDA for client
+      let matchPda: string | undefined;
+      try {
+        const solanaClient = getSolanaClient();
+        const [pda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from('match'),
+            solanaClient.getServerPublicKey().toBuffer(),
+            Buffer.from(room.id.toString().padStart(8, '0')),
+          ],
+          solanaClient.getProgram().programId
+        );
+        matchPda = pda.toString();
+      } catch (error) {
+        console.error('Failed to calculate match PDA:', error);
+      }
+      
       // Send join confirmation scoped to room
       this.sendMessage(ws, {
         type: MessageType.PLAYER_JOINED,
@@ -101,9 +129,11 @@ export class NetworkManager {
           playerId,
           gameState: room.server.getGameState(),
           roomId: room.id,
+          matchPda,
         },
         timestamp: Date.now(),
       });
+      
       // Notify other clients (we will still broadcast globally; clients can filter by roomId)
       this.broadcastExcept(ws, {
         type: MessageType.PLAYER_JOINED,
@@ -127,6 +157,46 @@ export class NetworkManager {
       // Update player state from client position update
       player.updateFromClient(data.position, data.rotation, data.velocity || { x: 0, y: 0, z: 0 });
       client.lastUpdate = Date.now();
+    }
+  }
+
+  private async handleRecordKillTransaction(ws: WebSocket, data: any): Promise<void> {
+    try {
+      const { serializedTransaction, shooterPubkey, victimPubkey } = data;
+      
+      if (!serializedTransaction) {
+        console.error('❌ No serialized transaction provided');
+        return;
+      }
+
+      console.log(`⛓️  Received signed kill transaction from ${shooterPubkey}`);
+      
+      // Send the signed transaction to Solana
+      const solanaClient = getSolanaClient();
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      const signature = await solanaClient.getProgram().provider.connection.sendRawTransaction(txBuffer, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      console.log(`✅ Kill recorded on-chain. Signature: ${signature}`);
+
+      // Confirm the transaction
+      await solanaClient.getProgram().provider.connection.confirmTransaction(signature, 'confirmed');
+      
+      // Notify all clients that kill was recorded on-chain
+      this.broadcast({
+        type: MessageType.KILL_RECORDED_ONCHAIN,
+        data: {
+          shooter: shooterPubkey,
+          victim: victimPubkey,
+          signature,
+        },
+        timestamp: Date.now(),
+      });
+
+    } catch (error) {
+      console.error('❌ Failed to process kill transaction:', error);
     }
   }
 
