@@ -8,6 +8,7 @@ import {
 } from '../types/game.types.js';
 import { GAME_CONSTANTS, MAP_CONSTANTS } from '../constants/game.constants.js';
 import { PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 import { getSolanaClient } from '../onchain/anchorClient.js';
 
 interface Client {
@@ -109,11 +110,14 @@ export class NetworkManager {
       let matchPda: string | undefined;
       try {
         const solanaClient = getSolanaClient();
+        const matchIdBN = new BN(room.id);
+        const matchIdBuffer = matchIdBN.toArrayLike(Buffer, 'le', 8);
+        
         const [pda] = PublicKey.findProgramAddressSync(
           [
             Buffer.from('match'),
             solanaClient.getServerPublicKey().toBuffer(),
-            Buffer.from(room.id.toString().padStart(8, '0')),
+            matchIdBuffer,
           ],
           solanaClient.getProgram().programId
         );

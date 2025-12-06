@@ -1,4 +1,4 @@
-import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
+import { AnchorProvider, Program, Wallet, BN } from '@coral-xyz/anchor';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -81,18 +81,22 @@ export class SolanaClient {
     try {
       console.log(`🎮 Creating on-chain match ${matchId}...`);
 
+      // Convert matchId to BN and then to little-endian bytes
+      const matchIdBN = new BN(matchId);
+      const matchIdBuffer = matchIdBN.toArrayLike(Buffer, 'le', 8);
+
       // Derive PDA for match account
       const [matchPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from('match'),
           this.serverKeypair.publicKey.toBuffer(),
-          Buffer.from(matchId.toString().padStart(8, '0')),
+          matchIdBuffer,
         ],
         this.program.programId
       );
 
       const tx = await this.program.methods
-        .createMatch(matchId, winPoints)
+        .createMatch(matchIdBN, winPoints)
         .accounts({
           owner: this.serverKeypair.publicKey,
           matchAccount: matchPda,
@@ -114,11 +118,14 @@ export class SolanaClient {
    */
   async joinMatch(matchId: number, playerPubkey: PublicKey): Promise<void> {
     try {
+      const matchIdBN = new BN(matchId);
+      const matchIdBuffer = matchIdBN.toArrayLike(Buffer, 'le', 8);
+      
       const [matchPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from('match'),
           this.serverKeypair.publicKey.toBuffer(),
-          Buffer.from(matchId.toString().padStart(8, '0')),
+          matchIdBuffer,
         ],
         this.program.programId
       );
@@ -146,11 +153,14 @@ export class SolanaClient {
     try {
       console.log(`💀 Recording kill: ${shooterPubkey.toString()} → ${victimPubkey.toString()}`);
 
+      const matchIdBN = new BN(matchId);
+      const matchIdBuffer = matchIdBN.toArrayLike(Buffer, 'le', 8);
+
       const [matchPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from('match'),
           this.serverKeypair.publicKey.toBuffer(),
-          Buffer.from(matchId.toString().padStart(8, '0')),
+          matchIdBuffer,
         ],
         this.program.programId
       );
