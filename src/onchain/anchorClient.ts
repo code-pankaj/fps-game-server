@@ -38,10 +38,22 @@ export class SolanaClient {
   }
 
   private loadServerKeypair(): Keypair {
-    // Try to load from file, otherwise create new one
+    // Try to load from base64 env var first (for Railway)
+    if (process.env.SERVER_KEYPAIR_BASE64) {
+      try {
+        const keypairData = JSON.parse(Buffer.from(process.env.SERVER_KEYPAIR_BASE64, 'base64').toString('utf-8'));
+        console.log('🔑 Loaded keypair from base64 environment variable');
+        return Keypair.fromSecretKey(new Uint8Array(keypairData));
+      } catch (error) {
+        console.error('❌ Failed to parse SERVER_KEYPAIR_BASE64:', error);
+      }
+    }
+
+    // Try to load from file
     try {
       const keypairPath = process.env.SERVER_KEYPAIR_PATH || './server-keypair.json';
       const keypairData = JSON.parse(readFileSync(keypairPath, 'utf-8'));
+      console.log('🔑 Loaded keypair from file:', keypairPath);
       return Keypair.fromSecretKey(new Uint8Array(keypairData));
     } catch (error) {
       console.warn('⚠️  No server keypair found, generating new one');
