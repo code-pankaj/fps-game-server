@@ -29,3 +29,5 @@ Players → Server → Solana Blockchain
 
 For the complete project including the game client and smart contracts, visit:
 [github.com/code-pankaj/SolFrag](https://github.com/code-pankaj/SolFrag)
+
+- Wallet Address Fund Here - 9CWYkYyfhhvJb62mSwpLwWVe8zsu3pg8tpnmV7jyiktw
